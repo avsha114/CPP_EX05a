@@ -12,6 +12,7 @@ class Car
     
     public:
         Car(string comp) : company(comp){}
+        int length() {return company.length();}
         bool operator==(const Car &other) const {return this->company == other.company;}
         friend ostream &operator<<(ostream &out, const Car &other) {return out<<other.company;}
 };
@@ -56,6 +57,9 @@ TEST_CASE("Inorder iterator test")
 {
     //Test premitive variable - int
     BinaryTree<int> tree_int;
+
+    // auto empty_it = tree_int.begin_inorder();
+    // CHECK_EQ(empty_it, tree_int.end_inorder());
 
     CHECK_NOTHROW(tree_int.add_root(0).
                     add_left(0,1).
@@ -149,12 +153,23 @@ TEST_CASE("Inorder iterator test")
     {
         CHECK_EQ((*it), expected_car_output2[i++]);
     }
+
+    //Check that begin() iterator (for:each loop) is working like inorder iterator:
+    auto it = tree_int.begin_inorder();
+    for (auto num : tree_int)
+    {
+        CHECK_EQ(num, (*it));
+        it++;
+    }
 }
 
 TEST_CASE("Preorder iterator test")
 {
     //Test premitive variable - int
     BinaryTree<int> tree_int;
+
+    auto empty_it = tree_int.begin_preorder();
+    CHECK_EQ(empty_it, tree_int.end_preorder());
 
     CHECK_NOTHROW(tree_int.add_root(0).
                     add_left(0,1).
@@ -180,7 +195,6 @@ TEST_CASE("Preorder iterator test")
 
     //Test class - string
     BinaryTree<string> tree_string;
-
     CHECK_NOTHROW(tree_string.add_root("Ancestor").
                     add_left("Ancestor","Father").
                     add_right("Ancestor", "Mother").
@@ -255,6 +269,9 @@ TEST_CASE("Postorder iterator test")
 {
     //Test premitive variable - int
     BinaryTree<int> tree_int;
+
+    auto empty_it = tree_int.begin_postorder();
+    CHECK_EQ(empty_it, tree_int.end_postorder());
 
     CHECK_NOTHROW(tree_int.add_root(0).
                     add_left(0,1).
@@ -348,5 +365,86 @@ TEST_CASE("Postorder iterator test")
     for (auto it = tree_car.begin_postorder() ; it != tree_car.end_postorder() ; ++it)
     {
         CHECK_EQ((*it), expected_car_output2[i++]);
+    }
+}
+
+TEST_CASE("Other operators and actions test")
+{
+    BinaryTree<int> tree_int;
+
+    CHECK_NOTHROW(tree_int.add_root(0).
+                    add_left(0,1).
+                    add_right(0, 2).
+                    add_left(1,3).
+                    add_right(1,4).
+                    add_left(2,5).
+                    add_right(2,6)); //Add nodes
+    
+    /*
+    		______________	0_______________
+	______	1_____			        ______	2_______
+	3		     4		            5		       6
+    */
+
+    //Check that operator* returns a valid reference to the tree nodes by changing their values:
+
+    //Inorder:
+    for (auto it = tree_int.begin_inorder() ; it != tree_int.end_inorder() ; it++)
+    {
+        CHECK_NOTHROW((*it) += 1);
+    }
+    int expected_int_output1[] = {4,2,5,1,6,3,7}; //Arbitrary order (inorder)
+    int i = 0;  
+    for (auto num : tree_int)
+    {
+        CHECK_EQ(num, expected_int_output1[i++]);
+    }
+
+    //Postorder:
+    for (auto it = tree_int.begin_postorder() ; it != tree_int.end_postorder() ; it++)
+    {
+        CHECK_NOTHROW((*it) *= 2);
+    }
+    i = 0;  
+    for (auto num : tree_int)
+    {
+        CHECK_EQ(num, expected_int_output1[i++]*2);
+    }
+
+    //Preorder:
+    for (auto it = tree_int.begin_preorder() ; it != tree_int.end_preorder() ; it++)
+    {
+        CHECK_NOTHROW((*it) = 100);
+    }
+    for (auto num : tree_int)
+    {
+        CHECK_EQ(num, 100);
+    }
+
+
+    //Check operator->
+    BinaryTree<Car> tree_car;
+
+    CHECK_NOTHROW(tree_car.add_root(Car("Volvo")).
+                    add_left(Car("Volvo"),Car("Ferrari")).
+                    add_left(Car("Ferrari"), Car("Honda")).
+                    add_right(Car("Ferrari"),Car("Tesla")).
+                    add_right(Car("Volvo"),Car("Kia")).
+                    add_right(Car("Kia"),Car("Beatle")));//Add nodes
+
+    /*
+    		______________Volvo_______________
+    _____Ferrari______			             Kia______
+  Honda		        Tesla                           Beatle		
+    */
+
+    //Test inorder iterator works propely like the array:    
+    Car expected_car_output[] = {Car("Honda"),Car("Ferrari"),Car("Tesla"),
+                                Car("Volvo"),Car("Kia"),Car("Beatle")};
+    i = 0;
+
+    for (auto it = tree_car.begin_inorder() ; it != tree_car.end_inorder() ; it++)
+    {
+        CHECK_EQ(it->length() , expected_car_output[i++].length());
     }
 }
